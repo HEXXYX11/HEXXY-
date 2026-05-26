@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HEXXY - Official Report Dashboard</title>
+  <meta name="description" content="HEXXY - Raycity Content Creator | Official Dashboard" />
+  <meta property="og:title" content="HEXXY — RAYCITY CONTENT CREATOR" />
+  <meta property="og:description" content="ศูนย์กลางข้อมูลและแดชบอร์ดหลักของช่อง HEXXY ผู้สร้างคอนเทนต์ Raycity" />
+  <meta property="og:type" content="website" />
+  
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,700;1,400&family=Sarabun:wght@400;700&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ==========================================================================
+       1. CORE STYLES & VARIABLE CONTROL
+       ========================================================================== */
+    :root {
+      --bg-main: #f0ede8;
+      --bg-card: #e8e3da;
+      --text-main: #111111;
+      --text-muted: #555555;
+      --border-color: #222222;
+      --accent-glow: rgba(0, 0, 0, 0.1);
+      
+      --matrix-green: #00ff66;
+      --matrix-glow: rgba(0, 255, 102, 0.3);
+      --glitch-red: #ff2a5f;
+      --glitch-blue: #00f0ff;
+    }
+
+    [data-theme="dark"] {
+      --bg-main: #0a0b0d;
+      --bg-card: #121417;
+      --text-main: #e2e8f0;
+      --text-muted: #94a3b8;
+      --border-color: #334155;
+      --accent-glow: rgba(0, 255, 102, 0.15);
+      --matrix-glow: rgba(0, 255, 102, 0.5);
+    }
+
+    * { 
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0; 
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      font-family: 'Sarabun', 'IBM Plex Mono', sans-serif;
+      transition: background-color 0.3s ease, color 0.3s ease;
+      overflow-x: hidden;
+      padding-bottom: 40px;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; 
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* ==========================================================================
+       2. THREE-COLUMN LAYOUT (แก้ปัญหาหน้าจอโล่งด้านข้าง)
+       ========================================================================== */
+    .page-wrapper {
+      display: grid;
+      grid-template-columns: 160px 1fr 160px;
+      min-height: 100vh;
+      width: 100%;
+    }
+
+    .side-panel {
+      padding: 20px 15px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      color: var(--text-muted);
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      text-transform: uppercase;
+    }
+
+    .side-panel.left-side {
+      border-right: 3px double var(--border-color);
+    }
+
+    .side-panel.right-side {
+      border-left: 3px double var(--border-color);
+      text-align: right;
+    }
+
+    .panel-block {
+      border-bottom: 1px dashed var(--border-color);
+      padding-bottom: 10px;
+    }
+
+    .panel-block-title {
+      font-weight: bold;
+      color: var(--text-main);
+      margin-bottom: 5px;
+    }
+
+    .container {
+      padding: 20px 30px;
+      max-width: 1100px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    @media (max-width: 1100px) {
+      .page-wrapper {
+        grid-template-columns: 1fr;
+      }
+      .side-panel {
+        display: none;
+      }
+      .container {
+        padding: 20px;
+      }
+    }
+
+    /* ==========================================================================
+       3. CONTROLS & HERO BANNER
+       ========================================================================== */
+    .top-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid var(--border-color);
+      padding-bottom: 10px;
+      margin-bottom: 20px;
+    }
+
+    .system-status {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .theme-toggle-btn {
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 6px 12px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: all 0.2s ease;
+    }
+    .theme-toggle-btn:hover {
+      background: var(--text-main);
+      color: var(--bg-main);
+    }
+
+    .hero-banner {
+      position: relative;
+      border: 2px solid var(--border-color);
+      background: var(--bg-card);
+      height: 180px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      margin-bottom: 25px;
+    }
+
+    .hero-banner::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: 
+        radial-gradient(var(--border-color) 1px, transparent 0),
+        linear-gradient(var(--accent-glow) 1px, transparent 1px);
+      background-size: 8px 8px, 100% 4px;
+      opacity: 0.15;
+    }
+
+    .hero-title {
+      position: relative;
+      font-family: 'Times New Roman', Times, serif;
+      font-size: clamp(3.5rem, 8vw, 6rem);
+      font-weight: 900;
+      letter-spacing: 8px;
+      text-transform: uppercase;
+      color: var(--text-main);
+      z-index: 2;
+    }
+
+    .hero-title:hover {
+      animation: glitch-jump 0.4s steps(2) infinite;
+    }
+
+    @keyframes glitch-jump {
+      0% { text-shadow: 2px -1px red, -2px 1px blue; transform: skewX(1deg); }
+      50% { text-shadow: -3px 2px red, 3px -2px blue; transform: skewY(-1deg); }
+      100% { text-shadow: 2px 2px red, -1px -2px blue; transform: none; }
+    }
+
+    /* ==========================================================================
+       4. INFINITE LOOP TICKER
+       ========================================================================== */
+    .ticker-wrapper {
+      border-top: 2px solid var(--border-color);
+      border-bottom: 2px solid var(--border-color);
+      background: var(--bg-card);
+      padding: 8px 0;
+      margin-bottom: 30px;
+      overflow: hidden;
+      display: flex;
+      white-space: nowrap;
+    }
+
+    .ticker-track {
+      display: flex;
+      width: max-content;
+      animation: ticker-loop 25s linear infinite;
+    }
+
+    .ticker-track:hover {
+      animation-play-state: paused;
+    }
+
+    .ticker-group {
+      display: flex;
+      align-items: center;
+      padding-right: 50px;
+    }
+
+    .ticker-item {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 13px;
+      font-weight: bold;
+      text-transform: uppercase;
+      margin-right: 40px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .ticker-sep {
+      color: var(--glitch-red);
+    }
+
+    @keyframes ticker-loop {
+      0% { transform: translate3d(0, 0, 0); }
+      100% { transform: translate3d(-50%, 0, 0); }
+    }
+
+    /* ==========================================================================
+       5. INTERACTIVE DASHBOARD TABS
+       ========================================================================== */
+    .dashboard-tabs {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 15px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: 1px solid var(--border-color);
+      border-bottom: none;
+      color: var(--text-muted);
+      padding: 8px 20px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 13px;
+      cursor: pointer;
+      position: relative;
+      top: 1px;
+    }
+
+    .tab-btn.active {
+      background: var(--bg-main);
+      color: var(--text-main);
+      font-weight: bold;
+      border-bottom: 2px solid var(--bg-main);
+      z-index: 2;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* ==========================================================================
+       6. GRID LAYOUT & CARDS
+       ========================================================================== */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1.9fr 1.1fr;
+      gap: 25px;
+    }
+
+    @media (max-width: 768px) {
+      .dashboard-grid { grid-template-columns: 1fr; }
+    }
+
+    .main-column, .sidebar-column {
+      display: flex;
+      flex-direction: column;
+      gap: 25px;
+    }
+
+    .news-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      padding: 20px;
+      position: relative;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      border-bottom: 1px dashed var(--border-color);
+      padding-bottom: 8px;
+      margin-bottom: 15px;
+    }
+
+    .card-title {
+      font-size: 18px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .card-meta {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* PROFILE INTRODUCTION WITH CUSTOM FRAME (กล่องแนะนำตัวพร้อมกรอบรูปภาพสวยๆ) */
+    .intro-box {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+    }
+
+    @media (max-width: 560px) {
+      .intro-box {
+        flex-direction: column;
+        text-align: center;
+      }
+    }
+
+    .profile-frame {
+      position: relative;
+      width: 140px;
+      height: 140px;
+      flex-shrink: 0;
+      padding: 8px;
+      border: 2px solid var(--border-color);
+      background: var(--bg-main);
+      box-shadow: 0 0 15px var(--accent-glow);
+    }
+
+    /* สไตล์ตัดขอบเฉลียงแบบ Sci-Fi เรโทรเท่ๆ */
+    .profile-frame::before {
+      content: '';
+      position: absolute;
+      top: -5px; left: -5px;
+      width: 12px; height: 12px;
+      border-top: 3px solid var(--border-color);
+      border-left: 3px solid var(--border-color);
+    }
+
+    .profile-frame::after {
+      content: '';
+      position: absolute;
+      bottom: -5px; right: -5px;
+      width: 12px; height: 12px;
+      border-bottom: 3px solid var(--border-color);
+      border-right: 3px solid var(--border-color);
+    }
+
+    .profile-avatar {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border: 1px solid var(--border-color);
+      filter: grayscale(20%) contrast(105%);
+    }
+
+    /* วงแหวนเรืองแสงและเอฟเฟกต์รอบรูปภาพเมื่อสลับโหมดดาร์ก */
+    [data-theme="dark"] .profile-frame {
+      border-color: var(--matrix-green);
+      box-shadow: 0 0 20px var(--matrix-glow);
+    }
+    [data-theme="dark"] .profile-avatar {
+      border-color: var(--matrix-green);
+    }
+
+    .intro-text-pane {
+      flex-grow: 1;
+    }
+
+    .intro-tag {
+      display: inline-block;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      background: var(--border-color);
+      color: var(--bg-main);
+      padding: 2px 6px;
+      margin-bottom: 8px;
+      font-weight: bold;
+    }
+
+    /* TIMELINE STYLES */
+    .timeline-container {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      margin-top: 10px;
+    }
+
+    .timeline-item {
+      display: grid;
+      grid-template-columns: 90px 1fr;
+      gap: 15px;
+      padding-bottom: 12px;
+      border-bottom: 1px dotted var(--border-color);
+    }
+
+    .timeline-item:last-child {
+      border-bottom: none;
+    }
+
+    .timeline-year {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: bold;
+    }
+
+    .timeline-title {
+      font-weight: bold;
+      font-size: 15px;
+      margin-bottom: 4px;
+    }
+
+    .timeline-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* COMPONENTS */
+    .stat-row {
+      margin-bottom: 15px;
+    }
+
+    .stat-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      font-family: 'IBM Plex Mono', monospace;
+      margin-bottom: 5px;
+    }
+
+    .progress-bar-container {
+      border: 1px solid var(--border-color);
+      background: var(--bg-main);
+      height: 12px;
+      padding: 1px;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: var(--text-main);
+      width: 0;
+      transition: width 1s cubic-bezier(0.1, 0.8, 0.2, 1);
+    }
+
+    [data-theme="dark"] .progress-bar-fill {
+      background: var(--matrix-green);
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      text-align: left;
+    }
+
+    .data-table th, .data-table td {
+      padding: 8px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .data-table th {
+      font-family: 'IBM Plex Mono', monospace;
+      font-weight: bold;
+      background: rgba(0,0,0,0.03);
+    }
+
+    /* SOCIAL LINKS */
+    .social-links-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 5px;
+    }
+
+    .social-link-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      border: 1px solid var(--border-color);
+      background: transparent;
+      color: var(--text-main);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px;
+      text-decoration: none;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      transition: all 0.15s ease;
+      cursor: pointer;
+    }
+
+    .social-link-btn:hover {
+      background: var(--text-main);
+      color: var(--bg-main);
+    }
+
+    [data-theme="dark"] .social-link-btn:hover {
+      background: var(--matrix-green);
+      color: #000;
+      border-color: var(--matrix-green);
+      box-shadow: 0 0 10px var(--matrix-glow);
+    }
+
+    .social-icon {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+    }
+
+    /* SERVER LIST */
+    .server-list-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .server-chip {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      padding: 6px 10px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-main);
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .server-chip::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--matrix-green);
+      flex-shrink: 0;
+    }
+
+    [data-theme="dark"] .server-chip {
+      border-color: #1e2a1e;
+    }
+
+    [data-theme="dark"] .server-chip:hover {
+      border-color: var(--matrix-green);
+      color: var(--matrix-green);
+    }
+
+    .server-chip.closed {
+      opacity: 0.5;
+      border-style: dashed;
+    }
+
+    .server-chip.closed::before {
+      background: var(--glitch-red);
+    }
+
+    .server-chip .badge-closed {
+      margin-left: auto;
+      font-size: 9px;
+      padding: 1px 5px;
+      background: var(--glitch-red);
+      color: #fff;
+      letter-spacing: 0.5px;
+      flex-shrink: 0;
+    }
+
+    .server-section-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 6px 0 4px;
+      border-bottom: 1px dashed var(--border-color);
+      margin: 14px 0 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .server-section-label .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .dot-active { background: var(--matrix-green); }
+    .dot-closed { background: var(--glitch-red); }
+
+    .server-count-badge {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      background: var(--border-color);
+      color: var(--bg-main);
+      padding: 2px 7px;
+      margin-left: auto;
+    }
+
+    /* LATEST VIDEOS */
+    .video-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .video-card {
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+      cursor: pointer;
+      transition: border-color 0.15s;
+      text-decoration: none;
+      display: block;
+      color: var(--text-main);
+    }
+
+    .video-card:hover { border-color: var(--matrix-green); }
+
+    .video-thumb {
+      width: 100%;
+      aspect-ratio: 16/9;
+      object-fit: cover;
+      display: block;
+      background: var(--bg-main);
+    }
+
+    .video-thumb-placeholder {
+      width: 100%;
+      aspect-ratio: 16/9;
+      background: var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .video-info {
+      padding: 8px 10px;
+    }
+
+    .video-title {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      color: var(--text-main);
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .video-date {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .video-loading {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px;
+      color: var(--text-muted);
+      padding: 20px 0;
+      text-align: center;
+    }
+
+    /* SERVER SEARCH */
+    .server-search-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+      align-items: center;
+    }
+
+    .server-search-input {
+      flex: 1;
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px;
+      padding: 7px 10px;
+      outline: none;
+    }
+
+    .server-search-input:focus { border-color: var(--matrix-green); }
+    .server-search-input::placeholder { color: var(--text-muted); }
+
+    .filter-btn {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      padding: 7px 12px;
+      border: 1px solid var(--border-color);
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .filter-btn.active, .filter-btn:hover {
+      background: var(--text-main);
+      color: var(--bg-main);
+      border-color: var(--text-main);
+    }
+
+    [data-theme="dark"] .filter-btn.active {
+      background: var(--matrix-green);
+      color: #000;
+      border-color: var(--matrix-green);
+    }
+
+    .server-chip.hidden { display: none; }
+
+    .no-results {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px;
+      color: var(--text-muted);
+      padding: 15px 0;
+      text-align: center;
+      display: none;
+    }
+
+    .audio-indicator {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      background: var(--matrix-green);
+      border-radius: 50%;
+      margin-left: 5px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page-wrapper">
+    
+    <aside class="side-panel left-side">
+      <div class="panel-block">
+        <div class="panel-block-title">Index Ref</div>
+        <div>SEC-01 // HOME</div>
+        <div>SYS-LN // 4026</div>
+      </div>
+      <div class="panel-block">
+        <div class="panel-block-title">Navigation</div>
+        <div>01 // Profile</div>
+        <div>02 // Tracker</div>
+      </div>
+      <div style="margin-top: auto; font-size: 10px; opacity: 0.5;">
+        © HEXXY.CORP
+      </div>
+    </aside>
+
+    <main class="container">
+      
+      <div class="top-controls">
+        <div class="system-status">
+          Terminal Log v4.0.26 <span class="audio-indicator"></span>
+        </div>
+        <button class="theme-toggle-btn" id="themeToggle" onclick="toggleTheme()">Switch Display Mode</button>
+      </div>
+
+      <div class="hero-banner">
+        <div class="hero-title">HEXXY</div>
+      </div>
+
+      <div class="ticker-wrapper" onclick="playBeep(440, 0.05)">
+        <div class="ticker-track">
+          <div class="ticker-group">
+            <div class="ticker-item"><span class="ticker-sep">✦</span> SYSTEM ONLINE</div>
+            <div class="ticker-item"><span class="ticker-sep">✦</span> RAYCITY CENTRAL LOG</div>
+            <div class="ticker-item"><span class="ticker-sep">✦</span> CONTENT STREAMING ACTIVE</div>
+            <div class="ticker-item"><span class="ticker-sep">✦</span> VEHICLE TELEMETRY CALIBRATED 🚗💨</div>
+          </div>
+          <div class="ticker-group">
+            <div class="ticker-item"><span class="ticker-sep">✦</span> SYSTEM ONLINE</div>
+            <div class="ticker-item"><span class="ticker-sep">✦</span> RAYCITY CENTRAL LOG</div>
+            <div class="ticker-item"><span class="ticker-sep">✦</span> CONTENT STREAMING ACTIVE</div>
+            <div class="ticker-item"><span class="ticker-sep">✦</span> VEHICLE TELEMETRY CALIBRATED 🚗💨</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="dashboard-tabs">
+        <button class="tab-btn active" onclick="switchTab(event, 'tab-profile')">CHANNEL PROFILE</button>
+        <button class="tab-btn" onclick="switchTab(event, 'tab-videos')">LATEST VIDEOS</button>
+        <button class="tab-btn" onclick="switchTab(event, 'tab-analytics')">SERVER LIST</button>
+      </div>
+
+      <div class="dashboard-grid">
+        
+        <div class="main-column">
+          
+          <div id="tab-profile" class="tab-content active">
+            
+            <div class="news-card" style="margin-bottom: 25px;">
+              <div class="card-header">
+                <div class="card-title">แนะนำตัวเอง (PROFILE: HEXXY)</div>
+                <div class="card-meta">CREATOR // ID</div>
+              </div>
+              
+              <div class="intro-box">
+                <div class="profile-frame">
+                  <img src="data:image/jpeg;base64,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" alt="HEXXY Profile" class="profile-avatar" />
+                </div>
+                <div class="intro-text-pane">
+                  <span class="intro-tag">RAYCITY CONTENT CREATOR</span>
+                  <p style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--matrix-green); margin: 6px 0 10px; letter-spacing:0.5px;">
+                    [ HEXXY // ผู้สร้างคอนเทนต์ Raycity Only ]
+                  </p>
+                  <p style="line-height: 1.6; color: var(--text-main); font-size: 14px;">
+                    สวัสดีครับ ยินดีต้อนรับเข้าสู่ศูนย์กลางการจัดการข้อมูลและแผงควบคุมหลักของช่อง! ผมเป็นสตรีมเมอร์และนักสร้างคอนเทนต์ที่มุ่งเน้นการถ่ายทอดเรื่องราว คอมมูนิตี้ และบรรยากาศความสนุกสนานของเกมในความทรงจำ ระบบแดชบอร์ดนี้สร้างขึ้นมาเพื่อสรุปข้อมูลเชิงลึก บันทึกเหตุการณ์ และความเคลื่อนไหวต่างๆ ไว้อย่างเป็นระบบในที่เดียวครับ
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="news-card" style="margin-bottom: 25px;">
+              <div class="card-header">
+                <div class="card-title">แนวทางการทำเนื้อหา (CONTENT FOCUS)</div>
+                <div class="card-meta">OVERVIEW // LOG</div>
+              </div>
+              <p style="line-height: 1.7; color: var(--text-main); font-size: 14.5px;">
+                เน้นการทำเนื้อหาเกี่ยวกับเกม Raycity เป็นหลัก โดยเดินทางไปแวะเวียนสัมผัสบรรยากาศในเซิร์ฟเวอร์ต่างๆ ทั้งในช่วงทดสอบระบบ Close Beta Test (CBT) ไปจนถึงช่วงที่เซิร์ฟเวอร์เปิดให้บริการจริง นอกจากนี้ยังทำกิจกรรมสร้างสรรค์และแจกของรางวัลให้กับกลุ่มผู้เล่นในคอมมูนิตี้ ตามความร่วมมือของทีมผู้ดูแลในแต่ละเซิร์ฟเวอร์
+              </p>
+            </div>
+
+            <div class="news-card">
+              <div class="card-header">
+                <div class="card-title">ประวัติความเป็นมาของช่อง (TIMELINE HISTORY)</div>
+                <div class="card-meta">ARCHIVE // RECORD</div>
+              </div>
+              
+              <div class="timeline-container">
+                <div class="timeline-item">
+                  <div class="timeline-year">April 2024</div>
+                  <div>
+                    <div class="timeline-title">จุดเริ่มต้นและการเบนสายคอนเทนต์</div>
+                    <div class="timeline-desc">เริ่มต้นอย่างเป็นทางการในช่วงประมาณกลางปี 2024 โดยในเดือนเมษายนได้หันมาเริ่มแวะเล่นเกมในเซิร์ฟเวอร์ Raycity ต่างๆ และสร้างสรรค์เนื้อหาลากยาวต่อเนื่องมาจนถึงปัจจุบัน</div>
+                  </div>
+                </div>
+                
+                <div class="timeline-item">
+                  <div class="timeline-year">CBT & OBT</div>
+                  <div>
+                    <div class="timeline-title">การเข้าร่วมทดสอบและรีวิวระบบ</div>
+                    <div class="timeline-desc">เข้ามีส่วนร่วมในการเก็บข้อมูลและสัมผัสบรรยากาศในอดีต ตั้งแต่ช่วงการเปิดทดสอบระบบแบบจำกัดจำนวน (Close Beta Test) ไปจนถึงช่วงที่ตัวเกมเปิดให้บริการจริงอย่างเป็นทางการ</div>
+                  </div>
+                </div>
+
+                <div class="timeline-item">
+                  <div class="timeline-year">Community</div>
+                  <div>
+                    <div class="timeline-title">กิจกรรมแจกของรางวัลร่วมกับผู้ดูแล</div>
+                    <div class="timeline-desc">สนับสนุนคอมมูนิตี้ผู้เล่นด้วยการจัดกิจกรรมแจกไอเทมและของรางวัลต่างๆ ภายในเกม ซึ่งได้รับการสนับสนุนและประสานงานโดยตรงจากแอดมินของแต่ละเซิร์ฟเวอร์</div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <div id="tab-videos" class="tab-content">
+            <div class="news-card">
+              <div class="card-header">
+                <div class="card-title">LATEST VIDEOS</div>
+                <div class="card-meta">CHANNEL // HEXXY</div>
+              </div>
+              <div id="video-feed" class="video-loading">[ LOADING FEED... ]</div>
+            </div>
+          </div>
+
+          <div id="tab-analytics" class="tab-content">
+            <div class="news-card">
+              <div class="card-header">
+                <div class="card-title">RAYCITY SERVER LOG</div>
+                <div class="card-meta">
+                  VISITED // <span class="server-count-badge">75 SV</span> <span class="server-count-badge" style="background:var(--matrix-green);color:#000;">17 ACTIVE</span> <span class="server-count-badge" style="background:var(--glitch-red);">58 CLOSED</span>
+                </div>
+              </div>
+              <p style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--text-muted); margin-bottom:15px;">
+                บันทึกรายชื่อเซิร์ฟเวอร์ Raycity ทั้งหมดที่เคยเข้าไปสัมผัสบรรยากาศและสร้างคอนเทนต์
+              </p>
+
+              <div class="server-search-bar">
+                <input class="server-search-input" id="serverSearch" type="text" placeholder="SEARCH SERVER..." oninput="filterServers()" />
+                <button class="filter-btn active" id="btn-all" onclick="setFilter('all')">ALL</button>
+                <button class="filter-btn" id="btn-active" onclick="setFilter('active')">ACTIVE</button>
+                <button class="filter-btn" id="btn-closed" onclick="setFilter('closed')">CLOSED</button>
+              </div>
+              <div class="no-results" id="noResults">[ NO SERVERS FOUND ]</div>
+              <div class="server-section-label"><span class="dot dot-active"></span> ACTIVE — 17 SERVERS</div>
+              <div class="server-list-grid">
+                <div class="server-chip">Rebirth</div>
+                <div class="server-chip">Edward</div>
+                <div class="server-chip">Phoenix</div>
+                <div class="server-chip">Run</div>
+                <div class="server-chip">BabyX</div>
+                <div class="server-chip">Neko</div>
+                <div class="server-chip">Crown</div>
+                <div class="server-chip">Shabu</div>
+                <div class="server-chip">Eleon</div>
+                <div class="server-chip">Prism</div>
+                <div class="server-chip">Horizon</div>
+                <div class="server-chip">168</div>
+                <div class="server-chip">AONE</div>
+                <div class="server-chip">Daisy</div>
+                <div class="server-chip">Gold</div>
+                <div class="server-chip">Arena</div>
+                <div class="server-chip">World</div>
+              </div>
+
+              <div class="server-section-label"><span class="dot dot-closed"></span> CLOSED — 58 SERVERS</div>
+              <div class="server-list-grid">
+                <div class="server-chip closed">Dubai <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">Xeno <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">Prime (Korea) <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">Landmark <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">VROX <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">SUNDAY <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">Nofect <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">Black <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">Unlimit <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">Unlimit SS2 <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">Simple <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">SuPreme <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">Realx <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">Secret <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">Absolute <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">Saga <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">SynthAxis <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">Jarb <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">Star <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">Daruma <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">Speed <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">Refresh <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">Classic <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">Winter <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">Python <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">Hyper <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">Chill <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">Amazon <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">Grand <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">Reborn <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">MMOTH <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">RedBlue <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">Infinity <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">Sus <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">One <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">Thea <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">Regular <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">ZX999 <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">Tokyo <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">Extreme <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">Deep <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">Repair <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">Delta <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">Unicorn <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">Kimmon <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">Savages <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">Dark <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">Sam <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">Global <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">Origin <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">Prime <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">T-Rex <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">Evolution <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">Alpha <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">Panda <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">Return <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">Family <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip closed">Eagle <span class="badge-closed">CLOSED</span></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="sidebar-column">
+          <div class="news-card">
+            <div class="card-header">
+              <div class="card-title">CONNECT</div>
+              <div class="card-meta">SOCIAL // LINKS</div>
+            </div>
+            <div class="social-links-grid">
+              <a class="social-link-btn" href="https://www.youtube.com/@Hexxyrealone" target="_blank" rel="noopener">
+                <svg class="social-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 0 0 2.1 2.1C4.5 20.4 12 20.4 12 20.4s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1C24 15.9 24 12 24 12s0-3.9-.5-5.8zM9.7 15.5V8.5l6.3 3.5-6.3 3.5z"/></svg>
+                YouTube
+              </a>
+              <a class="social-link-btn" href="https://discord.gg/HbzBkCCwCB" target="_blank" rel="noopener">
+                <svg class="social-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M20.3 4.4A19.7 19.7 0 0 0 15.3 3c-.2.4-.5 1-.7 1.4a18.3 18.3 0 0 0-5.2 0C9.2 4 8.9 3.4 8.7 3A19.6 19.6 0 0 0 3.7 4.4C.5 9.2-.3 13.9.1 18.5a19.8 19.8 0 0 0 6 3c.5-.7.9-1.4 1.3-2.1-.7-.3-1.4-.6-2-1l.5-.4a14.1 14.1 0 0 0 12.2 0l.5.4c-.6.4-1.3.7-2 1 .4.7.8 1.4 1.3 2.1a19.7 19.7 0 0 0 6-3c.5-5.2-.8-9.9-3.6-14.1zM8 15.5c-1.1 0-2-1-2-2.3s.9-2.3 2-2.3 2 1 2 2.3-.9 2.3-2 2.3zm8 0c-1.1 0-2-1-2-2.3s.9-2.3 2-2.3 2 1 2 2.3-.9 2.3-2 2.3z"/></svg>
+                Discord
+              </a>
+              <a class="social-link-btn" href="https://www.tiktok.com/@xskilly?lang=en" target="_blank" rel="noopener">
+                <svg class="social-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M9 0h1.98c.144.715.54 1.617 1.235 2.512C13.12 3.43 14.165 4 16 4v2c-1.986 0-3.204-.847-4-1.734V11a5 5 0 1 1-5-5v2a3 3 0 1 0 3 3V0z"/></svg>
+                TikTok
+              </a>
+              <a class="social-link-btn" href="https://www.facebook.com/profile.php?id=61568620298357" target="_blank" rel="noopener">
+                <svg class="social-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.1C24 5.4 18.6 0 12 0S0 5.4 0 12.1C0 18.1 4.4 23.1 10.1 24v-8.4H7.1v-3.5h3V9.4c0-3 1.8-4.6 4.5-4.6 1.3 0 2.7.2 2.7.2v2.9h-1.5c-1.5 0-1.9.9-1.9 1.9v2.2h3.3l-.5 3.5h-2.8V24C19.6 23.1 24 18.1 24 12.1z"/></svg>
+                Facebook
+              </a>
+            </div>
+          </div>
+
+
+
+    </div>
+  </main>
+
+  <aside class="side-panel right-side">
+    <div class="panel-block">
+      <div class="panel-block-title">Status code</div>
+      <div>SIG-OK // 200</div>
+      <div>LOC-TH // BKK</div>
+    </div>
+    <div class="panel-block">
+      <div class="panel-block-title">Data Stream</div>
+      <div>FREQ // 60HZ</div>
+      <div>ENC // UTF-8</div>
+    </div>
+    <div style="margin-top: auto; font-size: 10px; opacity: 0.5;">
+      RETR-FUTR V4
+    </div>
+  </aside>
+
+</div>
+
+<script>
+  const AudioContext = window.AudioContext || window.webkitAudioContext;
+  let audioCtx = null;
+
+  function playBeep(frequency = 440, duration = 0.05) {
+    try {
+      if (!audioCtx) audioCtx = new AudioContext();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      
+      oscillator.type = 'sine';
+      oscillator.frequency.value = frequency;
+      
+      gainNode.gain.setValueAtTime(0.03, audioCtx.currentTime); 
+      gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + duration);
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      
+      oscillator.start();
+      oscillator.stop(audioCtx.currentTime + duration);
+    } catch (e) {
+      // block audio error
+    }
+  }
+
+  function toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    const targetTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    
+    document.documentElement.setAttribute('data-theme', targetTheme);
+    localStorage.setItem('hexxy-theme', targetTheme);
+    playBeep(580, 0.08);
+  }
+
+  const savedTheme = localStorage.getItem('hexxy-theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+
+  function switchTab(event, tabId) {
+    playBeep(520, 0.04);
+    
+    document.querySelectorAll('.tab-content').forEach(tab => {
+      tab.classList.remove('active');
+    });
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.classList.remove('active');
+    });
+    
+    document.getElementById(tabId).classList.add('active');
+    event.currentTarget.classList.add('active');
+  }
+
+  window.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+      document.querySelectorAll('.progress-bar-fill').forEach(bar => {
+        const target = bar.getAttribute('data-progress');
+        bar.style.width = target;
+      });
+    }, 300);
+    
+    document.querySelectorAll('button, .tab-btn').forEach(element => {
+      element.addEventListener('click', () => playBeep(600, 0.03));
+    });
+  });
+  // YouTube RSS Feed
+  async function loadVideos() {
+    const feedDiv = document.getElementById('video-feed');
+    try {
+      const API_KEY = 'AIzaSyBuqCgOqZPL0HY4xQVpqt4T3lVUTJzOzVQ';
+      const CHANNEL_ID = 'UCtqKyfSjTPEJTGez9cXgBVQ';
+      const searchUrl = `https://www.googleapis.com/youtube/v3/search?key=${API_KEY}&channelId=${CHANNEL_ID}&part=snippet&order=date&maxResults=6&type=video`;
+      const res = await fetch(searchUrl);
+      const data = await res.json();
+      if (!data.items || data.items.length === 0) throw new Error('No items');
+      feedDiv.className = 'video-grid';
+      feedDiv.innerHTML = data.items.map(item => {
+        const vid = item.id.videoId;
+        const thumb = item.snippet.thumbnails.medium?.url || `https://i.ytimg.com/vi/${vid}/mqdefault.jpg`;
+        const date = new Date(item.snippet.publishedAt).toLocaleDateString('th-TH', { year:'numeric', month:'short', day:'numeric' });
+        const title = item.snippet.title;
+        return `<a class="video-card" href="https://www.youtube.com/watch?v=${vid}" target="_blank" rel="noopener">
+          <img class="video-thumb" src="${thumb}" alt="${title}" loading="lazy"/>
+          <div class="video-info">
+            <div class="video-title">${title}</div>
+            <div class="video-date">${date}</div>
+          </div>
+        </a>`;
+      }).join('');
+    } catch(e) {
+      feedDiv.innerHTML = '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:12px;color:var(--text-muted);padding:20px 0;text-align:center;">[ ไม่สามารถโหลดวิดีโอได้ — <a href="https://www.youtube.com/@Hexxyrealone" target="_blank" style="color:var(--matrix-green)">เปิด YouTube โดยตรง</a> ]</div>';
+    }
+  }
+
+  // Server Search & Filter
+  let currentFilter = 'all';
+
+  function setFilter(type) {
+    currentFilter = type;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('btn-' + type).classList.add('active');
+    filterServers();
+  }
+
+  function filterServers() {
+    const query = document.getElementById('serverSearch').value.toLowerCase().trim();
+    const chips = document.querySelectorAll('.server-chip');
+    let visible = 0;
+    chips.forEach(chip => {
+      const name = chip.textContent.replace('CLOSED','').trim().toLowerCase();
+      const isClosed = chip.classList.contains('closed');
+      const matchFilter = currentFilter === 'all' || (currentFilter === 'active' && !isClosed) || (currentFilter === 'closed' && isClosed);
+      const matchSearch = name.includes(query);
+      if (matchFilter && matchSearch) {
+        chip.classList.remove('hidden');
+        visible++;
+      } else {
+        chip.classList.add('hidden');
+      }
+    });
+    document.getElementById('noResults').style.display = visible === 0 ? 'block' : 'none';
+    // hide section labels if all chips in section are hidden
+    document.querySelectorAll('.server-section-label').forEach(label => {
+      const grid = label.nextElementSibling;
+      if (!grid) return;
+      const anyVisible = [...grid.querySelectorAll('.server-chip')].some(c => !c.classList.contains('hidden'));
+      label.style.display = anyVisible ? '' : 'none';
+    });
+  }
+
+  loadVideos();
+</script>
+
+</body>
+</html>
