@@ -832,6 +832,82 @@
       display: none;
     }
 
+    /* LIVE STREAM */
+    .live-banner {
+      border: 1px solid var(--border-color);
+      margin-top: 10px;
+      overflow: hidden;
+      display: none;
+    }
+
+    .live-banner.is-live {
+      display: block;
+      border-color: #ff0000;
+      box-shadow: 0 0 12px rgba(255,0,0,0.3);
+    }
+
+    .live-banner.is-offline {
+      display: block;
+    }
+
+    .live-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      background: rgba(255,0,0,0.08);
+    }
+
+    .live-banner.is-offline .live-header {
+      background: transparent;
+    }
+
+    .live-badge {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      font-weight: bold;
+      padding: 2px 8px;
+      letter-spacing: 1px;
+    }
+
+    .live-badge.on {
+      background: #ff0000;
+      color: #fff;
+      animation: blink 1s infinite;
+    }
+
+    .live-badge.off {
+      background: var(--border-color);
+      color: var(--text-muted);
+    }
+
+    .live-title {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px;
+      color: var(--text-main);
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .live-watch-btn {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      padding: 4px 10px;
+      background: #ff0000;
+      color: #fff;
+      text-decoration: none;
+      flex-shrink: 0;
+    }
+
+    .live-thumb {
+      width: 100%;
+      aspect-ratio: 16/9;
+      object-fit: cover;
+      display: block;
+    }
+
     .topview-item {
       display: flex;
       align-items: center;
@@ -972,6 +1048,15 @@
       </div>
       <div class="stat-refresh" id="stat-refresh-time">[ LOADING... ]</div>
 
+      <div class="live-banner" id="live-banner">
+        <div class="live-header">
+          <span class="live-badge" id="live-badge">●</span>
+          <span class="live-title" id="live-title">กำลังตรวจสอบสถานะ Live...</span>
+          <a class="live-watch-btn" id="live-watch-btn" href="https://www.youtube.com/@Hexxyrealone/live" target="_blank" rel="noopener" style="display:none">▶ ดู LIVE</a>
+        </div>
+        <img class="live-thumb" id="live-thumb" src="" alt="live thumbnail" style="display:none"/>
+      </div>
+
       <div class="dashboard-tabs">
         <button class="tab-btn active" onclick="switchTab(event, 'tab-profile')">CHANNEL PROFILE</button>
         <button class="tab-btn" onclick="switchTab(event, 'tab-videos')">LATEST VIDEOS</button>
@@ -1110,6 +1195,7 @@
                 <div class="server-chip">Gold</div>
                 <div class="server-chip">Arena</div>
                 <div class="server-chip">World</div>
+                <div class="server-chip">Origin</div>
               </div>
 
               <div class="server-section-label"><span class="dot dot-closed"></span> CLOSED — 57 SERVERS</div>
@@ -1163,7 +1249,6 @@
                 <div class="server-chip closed">Dark <span class="badge-closed">CLOSED</span></div>
                 <div class="server-chip closed">Sam <span class="badge-closed">CLOSED</span></div>
                 <div class="server-chip closed">Global <span class="badge-closed">CLOSED</span></div>
-                <div class="server-chip">Origin</div>
                 <div class="server-chip closed">Prime <span class="badge-closed">CLOSED</span></div>
                 <div class="server-chip closed">T-Rex <span class="badge-closed">CLOSED</span></div>
                 <div class="server-chip closed">Evolution <span class="badge-closed">CLOSED</span></div>
@@ -1418,6 +1503,46 @@
     }
   }
 
+  // Live Stream Status
+  async function loadLiveStatus() {
+    try {
+      const API_KEY = 'AIzaSyBuqCgOqZPL0HY4xQVpqt4T3lVUTJzOzVQ';
+      const CHANNEL_ID = 'UCtqKyfSjTPEJTGez9cXgBVQ';
+      const url = `https://www.googleapis.com/youtube/v3/search?key=${API_KEY}&channelId=${CHANNEL_ID}&part=snippet&eventType=live&type=video`;
+      const res = await fetch(url);
+      const data = await res.json();
+      const banner = document.getElementById('live-banner');
+      const badge = document.getElementById('live-badge');
+      const title = document.getElementById('live-title');
+      const thumb = document.getElementById('live-thumb');
+      const watchBtn = document.getElementById('live-watch-btn');
+
+      if (data.items && data.items.length > 0) {
+        const live = data.items[0];
+        const vid = live.id.videoId;
+        banner.className = 'live-banner is-live';
+        badge.className = 'live-badge on';
+        badge.textContent = '● LIVE';
+        title.textContent = live.snippet.title;
+        thumb.src = live.snippet.thumbnails.medium?.url || `https://i.ytimg.com/vi/${vid}/mqdefault.jpg`;
+        thumb.style.display = 'block';
+        watchBtn.href = `https://www.youtube.com/watch?v=${vid}`;
+        watchBtn.style.display = 'block';
+      } else {
+        banner.className = 'live-banner is-offline';
+        badge.className = 'live-badge off';
+        badge.textContent = '● OFFLINE';
+        title.textContent = 'ยังไม่ได้ Live ในขณะนี้';
+        thumb.style.display = 'none';
+        watchBtn.style.display = 'none';
+      }
+    } catch(e) {
+      console.log('Live check failed', e);
+    }
+  }
+
+  loadLiveStatus();
+  setInterval(loadLiveStatus, 60000);
   loadTopViews();
   loadChannelStats();
   setInterval(loadChannelStats, 60000);
