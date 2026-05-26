@@ -1289,9 +1289,17 @@
             </div>
           </div>
 
-
-
-    </div>
+          <div class="news-card">
+            <div class="card-header">
+              <div class="card-title">DISCORD SERVER</div>
+              <div class="card-meta">LIVE // MEMBERS</div>
+            </div>
+            <iframe src="https://discord.com/widget?id=1345422370554511450&theme=dark"
+              width="100%" height="300" allowtransparency="true" frameborder="0"
+              sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"
+              style="border:1px solid var(--border-color); margin-top:8px; display:block;">
+            </iframe>
+          </div>
   </main>
 
   <aside class="side-panel right-side">
@@ -1542,10 +1550,13 @@
   }
 
   loadLiveStatus();
-  setInterval(loadLiveStatus, 60000);
+  setInterval(loadLiveStatus, 120000);   // ทุก 2 นาที
   loadTopViews();
   loadChannelStats();
-  setInterval(loadChannelStats, 60000);
+  setInterval(loadChannelStats, 300000); // ทุก 5 นาที
+  setInterval(loadVideos, 1800000);      // ทุก 30 นาที
+  setInterval(loadTopViews, 1800000);    // ทุก 30 นาที
+  setInterval(loadChannelStats, 300000);
 
   loadVideos();
 </script>
