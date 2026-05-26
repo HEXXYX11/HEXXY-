@@ -832,6 +832,64 @@
       display: none;
     }
 
+    .topview-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border-color);
+      text-decoration: none;
+      color: var(--text-main);
+      transition: opacity 0.15s;
+    }
+
+    .topview-item:last-child { border-bottom: none; }
+    .topview-item:hover { opacity: 0.75; }
+
+    .topview-rank {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 20px;
+      font-weight: bold;
+      width: 32px;
+      flex-shrink: 0;
+      text-align: center;
+    }
+
+    .rank-1 { color: #FFD700; }
+    .rank-2 { color: #C0C0C0; }
+    .rank-3 { color: #CD7F32; }
+    .rank-4, .rank-5 { color: var(--text-muted); }
+
+    .topview-thumb {
+      width: 100px;
+      aspect-ratio: 16/9;
+      object-fit: cover;
+      flex-shrink: 0;
+      border: 1px solid var(--border-color);
+    }
+
+    .topview-info { flex: 1; min-width: 0; }
+
+    .topview-title {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px;
+      color: var(--text-main);
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .topview-views {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      color: var(--matrix-green);
+      margin-top: 4px;
+    }
+
+    [data-theme="light"] .topview-views { color: #1a6b1a; }
+
     .audio-indicator {
       display: inline-block;
       width: 6px;
@@ -917,6 +975,7 @@
       <div class="dashboard-tabs">
         <button class="tab-btn active" onclick="switchTab(event, 'tab-profile')">CHANNEL PROFILE</button>
         <button class="tab-btn" onclick="switchTab(event, 'tab-videos')">LATEST VIDEOS</button>
+        <button class="tab-btn" onclick="switchTab(event, 'tab-topviews')">TOP VIEWS</button>
         <button class="tab-btn" onclick="switchTab(event, 'tab-analytics')">SERVER LIST</button>
       </div>
 
@@ -1003,6 +1062,16 @@
             </div>
           </div>
 
+          <div id="tab-topviews" class="tab-content">
+            <div class="news-card">
+              <div class="card-header">
+                <div class="card-title">TOP 5 MOST VIEWED</div>
+                <div class="card-meta">CHANNEL // HEXXY</div>
+              </div>
+              <div id="topviews-feed" class="video-loading">[ LOADING... ]</div>
+            </div>
+          </div>
+
           <div id="tab-analytics" class="tab-content">
             <div class="news-card">
               <div class="card-header">
@@ -1022,7 +1091,7 @@
                 <button class="filter-btn" id="btn-closed" onclick="setFilter('closed')">CLOSED</button>
               </div>
               <div class="no-results" id="noResults">[ NO SERVERS FOUND ]</div>
-              <div class="server-section-label"><span class="dot dot-active"></span> ACTIVE — 17 SERVERS</div>
+              <div class="server-section-label"><span class="dot dot-active"></span> ACTIVE — 18 SERVERS</div>
               <div class="server-list-grid">
                 <div class="server-chip">Rebirth</div>
                 <div class="server-chip">Edward</div>
@@ -1043,7 +1112,7 @@
                 <div class="server-chip">World</div>
               </div>
 
-              <div class="server-section-label"><span class="dot dot-closed"></span> CLOSED — 58 SERVERS</div>
+              <div class="server-section-label"><span class="dot dot-closed"></span> CLOSED — 57 SERVERS</div>
               <div class="server-list-grid">
                 <div class="server-chip closed">Dubai <span class="badge-closed">CLOSED</span></div>
                 <div class="server-chip closed">Xeno <span class="badge-closed">CLOSED</span></div>
@@ -1094,7 +1163,7 @@
                 <div class="server-chip closed">Dark <span class="badge-closed">CLOSED</span></div>
                 <div class="server-chip closed">Sam <span class="badge-closed">CLOSED</span></div>
                 <div class="server-chip closed">Global <span class="badge-closed">CLOSED</span></div>
-                <div class="server-chip closed">Origin <span class="badge-closed">CLOSED</span></div>
+                <div class="server-chip">Origin</div>
                 <div class="server-chip closed">Prime <span class="badge-closed">CLOSED</span></div>
                 <div class="server-chip closed">T-Rex <span class="badge-closed">CLOSED</span></div>
                 <div class="server-chip closed">Evolution <span class="badge-closed">CLOSED</span></div>
@@ -1310,6 +1379,46 @@
     }
   }
 
+  // Top 5 Most Viewed Videos
+  async function loadTopViews() {
+    const feedDiv = document.getElementById('topviews-feed');
+    try {
+      const API_KEY = 'AIzaSyBuqCgOqZPL0HY4xQVpqt4T3lVUTJzOzVQ';
+      const CHANNEL_ID = 'UCtqKyfSjTPEJTGez9cXgBVQ';
+      // Search top videos by viewCount
+      const searchUrl = `https://www.googleapis.com/youtube/v3/search?key=${API_KEY}&channelId=${CHANNEL_ID}&part=snippet&order=viewCount&maxResults=5&type=video`;
+      const searchRes = await fetch(searchUrl);
+      const searchData = await searchRes.json();
+      if (!searchData.items || searchData.items.length === 0) throw new Error('No items');
+      // Get view counts via videos endpoint
+      const ids = searchData.items.map(i => i.id.videoId).join(',');
+      const statsUrl = `https://www.googleapis.com/youtube/v3/videos?key=${API_KEY}&id=${ids}&part=statistics`;
+      const statsRes = await fetch(statsUrl);
+      const statsData = await statsRes.json();
+      const statsMap = {};
+      statsData.items.forEach(v => { statsMap[v.id] = v.statistics; });
+      const rankLabels = ['1', '2', '3', '4', '5'];
+      feedDiv.className = '';
+      feedDiv.innerHTML = searchData.items.map((item, i) => {
+        const vid = item.id.videoId;
+        const thumb = item.snippet.thumbnails.medium?.url || `https://i.ytimg.com/vi/${vid}/mqdefault.jpg`;
+        const title = item.snippet.title;
+        const views = statsMap[vid] ? parseInt(statsMap[vid].viewCount).toLocaleString('th-TH') : '—';
+        return `<a class="topview-item" href="https://www.youtube.com/watch?v=${vid}" target="_blank" rel="noopener">
+          <div class="topview-rank rank-${i+1}">#${rankLabels[i]}</div>
+          <img class="topview-thumb" src="${thumb}" alt="${title}" loading="lazy"/>
+          <div class="topview-info">
+            <div class="topview-title">${title}</div>
+            <div class="topview-views">👁 ${views} views</div>
+          </div>
+        </a>`;
+      }).join('');
+    } catch(e) {
+      feedDiv.innerHTML = '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:12px;color:var(--text-muted);padding:20px 0;text-align:center;">[ โหลดไม่ได้ — <a href="https://www.youtube.com/@Hexxyrealone" target="_blank" style="color:var(--matrix-green)">เปิด YouTube โดยตรง</a> ]</div>';
+    }
+  }
+
+  loadTopViews();
   loadChannelStats();
   setInterval(loadChannelStats, 60000);
 
