@@ -255,6 +255,78 @@
     /* ==========================================================================
        5. INTERACTIVE DASHBOARD TABS
        ========================================================================== */
+    /* CHANNEL STATS */
+    .channel-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin: 14px 0 0;
+    }
+
+    .stat-card {
+      border: 1px solid var(--border-color);
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    [data-theme="dark"] .stat-card {
+      border-color: #1e2a1e;
+    }
+
+    [data-theme="dark"] .stat-card:hover {
+      border-color: var(--matrix-green);
+    }
+
+    .stat-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .stat-value {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 22px;
+      font-weight: bold;
+      color: var(--matrix-green);
+      letter-spacing: 1px;
+      min-height: 30px;
+    }
+
+    [data-theme="light"] .stat-value { color: #1a6b1a; }
+
+    .stat-unit {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    .stat-live-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--matrix-green);
+      position: absolute;
+      top: 10px; right: 10px;
+      animation: blink 1.2s infinite;
+    }
+
+    .stat-refresh {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      color: var(--text-muted);
+      text-align: right;
+      margin-top: 6px;
+    }
+
+    @media (max-width: 500px) {
+      .channel-stats { grid-template-columns: repeat(2, 1fr); }
+    }
+
     .dashboard-tabs {
       display: flex;
       gap: 5px;
@@ -820,6 +892,28 @@
         </div>
       </div>
 
+      <div class="channel-stats">
+        <div class="stat-card">
+          <div class="stat-live-dot"></div>
+          <div class="stat-label">SUBSCRIBERS</div>
+          <div class="stat-value" id="stat-subs">—</div>
+          <div class="stat-unit">คน</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-live-dot"></div>
+          <div class="stat-label">TOTAL VIEWS</div>
+          <div class="stat-value" id="stat-views">—</div>
+          <div class="stat-unit">วิว</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-live-dot"></div>
+          <div class="stat-label">VIDEOS</div>
+          <div class="stat-value" id="stat-videos">—</div>
+          <div class="stat-unit">คลิป</div>
+        </div>
+      </div>
+      <div class="stat-refresh" id="stat-refresh-time">[ LOADING... ]</div>
+
       <div class="dashboard-tabs">
         <button class="tab-btn active" onclick="switchTab(event, 'tab-profile')">CHANNEL PROFILE</button>
         <button class="tab-btn" onclick="switchTab(event, 'tab-videos')">LATEST VIDEOS</button>
@@ -1194,6 +1288,30 @@
       label.style.display = anyVisible ? '' : 'none';
     });
   }
+
+  // Channel Stats
+  async function loadChannelStats() {
+    try {
+      const API_KEY = 'AIzaSyBuqCgOqZPL0HY4xQVpqt4T3lVUTJzOzVQ';
+      const CHANNEL_ID = 'UCtqKyfSjTPEJTGez9cXgBVQ';
+      const url = `https://www.googleapis.com/youtube/v3/channels?key=${API_KEY}&id=${CHANNEL_ID}&part=statistics`;
+      const res = await fetch(url);
+      const data = await res.json();
+      if (!data.items || data.items.length === 0) throw new Error('No data');
+      const stats = data.items[0].statistics;
+      const fmt = n => parseInt(n).toLocaleString('th-TH');
+      document.getElementById('stat-subs').textContent = fmt(stats.subscriberCount);
+      document.getElementById('stat-views').textContent = fmt(stats.viewCount);
+      document.getElementById('stat-videos').textContent = fmt(stats.videoCount);
+      const now = new Date().toLocaleTimeString('th-TH');
+      document.getElementById('stat-refresh-time').textContent = `[ อัปเดตล่าสุด ${now} — refresh ทุก 60 วินาที ]`;
+    } catch(e) {
+      document.getElementById('stat-refresh-time').textContent = '[ โหลดสถิติไม่ได้ ]';
+    }
+  }
+
+  loadChannelStats();
+  setInterval(loadChannelStats, 60000);
 
   loadVideos();
 </script>
